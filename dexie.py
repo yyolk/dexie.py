@@ -5,10 +5,6 @@ import base58
 from uplink import Consumer, Query, get, returns
 
 
-def offer_file_to_dexie_id(offerfile: bytes):
-    return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
-
-
 class DexieOfferStatus(Enum):
     ACTIVE = 0
     PENDING = 1
@@ -25,8 +21,8 @@ class DexieSortQuery(Enum):
     DATE_FOUND = "date_found"
 
 
+@returns.json
 class Dexie(Consumer):
-    @returns.json()
     @get("v1/offers")
     def search_offers(
         self,
@@ -42,28 +38,20 @@ class Dexie(Consumer):
     ):
         pass
 
-    @returns.json()
-    @get("v1/offers/{_id}")
-    def get_offer(self, _id):
+    @get("v1/offers/{id_}")
+    def get_offer(self, id_):
         """Inspect an offer
 
         Args:
-            _id: Base58 encoded SHA256 Hash of the offer file
+            id_: Base58 encoded SHA256 Hash of the offer file
         """
         pass
 
-    def get_offer_status(self, _id):
-        offer = self.get_offer(_id).get("offer")
-        if offer:
-            return DexieOfferStatus(offer["status"])
-
-    @returns.json
     @get("v1/prices/pairs")
     def get_pairs(self):
         """Get all traded XCH-CAT Pairs"""
         pass
 
-    @returns.json
     @get("v1/prices/tickers")
     def get_tickers(self, ticker_id: Query = None):
         """Tickers (Market and Price Data)
@@ -73,7 +61,6 @@ class Dexie(Consumer):
         """
         pass
 
-    @returns.json
     @get("v1/prices/orderbook")
     def get_orderbook(self, ticker_id: Query, depth: Query = None):
         """Order Book Depth Details
@@ -84,7 +71,6 @@ class Dexie(Consumer):
         """
         pass
 
-    @returns.json
     @get("v1/prices/historical_trades")
     def get_historical_trades(
         self,
@@ -104,3 +90,16 @@ class Dexie(Consumer):
             end_time: (timestamp in milliseconds) End time for historical trades query
         """
         pass
+
+
+# Utility Functions
+
+
+def offer_file_to_dexie_id(offerfile: bytes):
+    return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
+
+
+def get_offer_status(offer_status):
+    offer = offer_status.get("offer")
+    if offer:
+        return DexieOfferStatus(offer["status"])
