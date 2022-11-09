@@ -2,7 +2,7 @@ import hashlib
 from enum import Enum
 
 import base58
-from uplink import Consumer, Query, get, returns
+from uplink import Consumer, Field, Query, get, json, post, returns
 
 
 class DexieOfferStatus(Enum):
@@ -23,6 +23,16 @@ class DexieSortQuery(Enum):
 
 @returns.json
 class Dexie(Consumer):
+    @json
+    @post("v1/offers")
+    def post_offer(self, offer: Field):
+        """Post an offer to dexie
+
+        Args:
+            offer: (uplink.Field) UTF-8 encoded offerfile
+        """
+        pass
+
     @get("v1/offers")
     def search_offers(
         self,
@@ -36,6 +46,21 @@ class Dexie(Consumer):
         page: Query = None,
         page_size: Query = None,
     ):
+        """Search Offers
+
+        All arguments are optional. Call without args to get latest offers.
+
+        Args:
+            status: (uplink.Query | [DexieOfferStatus]) Only include offers with this status. TODO: Multiples allowed.
+            offered: (uplink.Query) Only include offers which offer this asset
+            requested: (uplink.Query) Only include offers which request this asset
+            offered_or_requested: (uplink.Query) Only include offers which request OR offer this asset
+            sort: (uplink.Query) Sort offers by this field
+            compact: (uplink.Query) Outputs a lighter version without full offer files. Use this if you only need trade or price data to save bandwidth and load (e.g recent trades).
+            include_multiple_requested: (uplink.Query) Include offers which request multiple assets (only applies if requested parameter is set)
+            page: (uplink.Query) Request a specific page.
+            page_size: (uplink.Query) How many offers to request. For more than 100 offers use ``page``.
+        """
         pass
 
     @get("v1/offers/{id_}")
@@ -43,7 +68,7 @@ class Dexie(Consumer):
         """Inspect an offer
 
         Args:
-            id_: Base58 encoded SHA256 Hash of the offer file
+            id_: Base58 encoded SHA256 Hash of the offer file (Dexie's OfferFile Id)
         """
         pass
 
@@ -96,10 +121,22 @@ class Dexie(Consumer):
 
 
 def offer_file_to_dexie_id(offerfile: bytes):
+    """Take offerfile encoded as bytes and return a dexie offerfile id
+
+    Args:
+        offerfile: (bytes) The serialized offer file as bytes
+    """
     return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
 
 
 def get_offer_status(offer_status):
+    """Just grab the status.
+
+    Useful for batch processing status of many offers.
+
+    Args:
+        offer_status: (Dict) the response from a ``Dexie.get_offer`` request
+    """
     offer = offer_status.get("offer")
     if offer:
         return DexieOfferStatus(offer["status"])
