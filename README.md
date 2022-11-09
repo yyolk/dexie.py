@@ -13,7 +13,7 @@ Refer to the main [dexie.space API docs](https://dexie.space/api) for informatio
 
 ## Quick Start
 
-```pyshell
+```python-repl
 >>> import dexie
 
 # initialize the api client
