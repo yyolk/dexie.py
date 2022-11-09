@@ -96,6 +96,11 @@ class Dexie(Consumer):
 
 
 def offer_file_to_dexie_id(offerfile: bytes):
+    """Take offerfile encoded as bytes and return a dexie offerfile id
+
+    Args:
+        offerfile: (bytes) The serialized offer file as bytes 
+    """
     return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
 
 
