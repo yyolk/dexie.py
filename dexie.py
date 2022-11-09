@@ -2,7 +2,7 @@ import hashlib
 from enum import Enum
 
 import base58
-from uplink import Consumer, Query, get, returns
+from uplink import Consumer, Field, Query, get, json, post, returns
 
 
 class DexieOfferStatus(Enum):
@@ -23,6 +23,12 @@ class DexieSortQuery(Enum):
 
 @returns.json
 class Dexie(Consumer):
+    @json
+    @post("v1/offers")
+    def post_offer(self, offer: Field):
+        """Post an offer to dexie"""
+        pass
+
     @get("v1/offers")
     def search_offers(
         self,
@@ -99,7 +105,7 @@ def offer_file_to_dexie_id(offerfile: bytes):
     """Take offerfile encoded as bytes and return a dexie offerfile id
 
     Args:
-        offerfile: (bytes) The serialized offer file as bytes 
+        offerfile: (bytes) The serialized offer file as bytes
     """
     return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
 
