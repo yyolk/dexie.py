@@ -75,7 +75,7 @@ class Dexie(Consumer):
     def get_historical_trades(
         self,
         ticker_id: Query,
-        _type: Query(name="type") = None,
+        type_: Query(name="type") = None,
         limit: Query = None,
         start_time: Query = None,
         end_time: Query = None,
@@ -84,7 +84,7 @@ class Dexie(Consumer):
 
         Args:
             ticker_id: any ticker_id from /pairs, eg ``XCH_DBX``
-            _type: "buy" or "sell"
+            type_: "buy" or "sell"
             limit: (int) Number of historical trades to retrieve from time of query. Default is 1000, set to 0 for all.
             start_time: (timestamp in milliseconds) Start time from which to query historical trades from
             end_time: (timestamp in milliseconds) End time for historical trades query
