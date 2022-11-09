@@ -2,14 +2,21 @@
 Simple dexie client
 
 
-## How To Use
+## Installation
 
-I'll make this a package if people find it useful, for now you can directly
-include this file and the additional requirements from `requirements.txt` to
-have a basic [dexie.space](https://dexie.space) Public API client.
+```
+pip install dexie.py
+```
 
+## Overview
 
 Refer to the main [dexie.space API docs](https://dexie.space/api) for information on the endpoints and their parameters.
+
+Basically you need to
+
+1. Instantiate the client
+2. Call a method on the client, that's related to it's endpoint
+3. Use data that's returned by dexie
 
 ## Quick Start
 
