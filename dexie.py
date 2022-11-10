@@ -123,7 +123,7 @@ class Dexie(Consumer):
         """Post an offer to dexie
 
         Args:
-            offer: (uplink.Field) UTF-8 encoded offerfile
+            offer: (uplink.Field) an offer string
         """
 
     @get("v1/offers")
@@ -143,16 +143,18 @@ class Dexie(Consumer):
 
         All arguments are optional. Call without args to get latest offers.
 
+        TODO:
+            - allow multiples on args:status
         Args:
-            status: (uplink.Query | [DexieOfferStatus]) Only include offers with this status. TODO: Multiples allowed.
-            offered: (uplink.Query) Only include offers which offer this asset
-            requested: (uplink.Query) Only include offers which request this asset
-            offered_or_requested: (uplink.Query) Only include offers which request OR offer this asset
-            sort: (uplink.Query) Sort offers by this field
-            compact: (uplink.Query) Outputs a lighter version without full offer files. Use this if you only need trade or price data to save bandwidth and load (e.g recent trades).
-            include_multiple_requested: (uplink.Query) Include offers which request multiple assets (only applies if requested parameter is set)
-            page: (uplink.Query) Request a specific page.
-            page_size: (uplink.Query) How many offers to request. For more than 100 offers use ``page``.
+            status: (Optional[DexieOfferStatus]) Only include offers with this status.
+            offered: (Optional[str]) Only include offers which offer this asset
+            requested: (Optional[str]) Only include offers which request this asset
+            offered_or_requested: (Optional[str]) Only include offers which request OR offer this asset
+            sort: (Optional[DexieSortQuery]) Sort offers by this field
+            compact: (Optional[bool]) Outputs a lighter version without full offer files. Use this if you only need trade or price data to save bandwidth and load (e.g recent trades).
+            include_multiple_requested: (Optional[bool]) Include offers which request multiple assets (only applies if requested parameter is set)
+            page: (Optional[int]) Request a specific page.
+            page_size: (Optional[int]) How many offers to request. For more than 100 offers use ``page``.
         """
 
     @get("v1/offers/{id_}")
@@ -160,7 +162,7 @@ class Dexie(Consumer):
         """Inspect an offer
 
         Args:
-            id_: Base58 encoded SHA256 Hash of the offer file (Dexie's OfferFile Id)
+            id_: (str) Base58 encoded SHA256 Hash of the offer file (Dexie's OfferFile Id)
         """
 
     @get("v1/prices/pairs")
@@ -172,7 +174,7 @@ class Dexie(Consumer):
         """Tickers (Market and Price Data)
 
         Args:
-            ticker_id: (not required) any ``ticker_id`` from /pairs
+            ticker_id: (Optional[str]) any ``ticker_id`` from /pairs
         """
 
     @get("v1/prices/orderbook")
@@ -180,8 +182,8 @@ class Dexie(Consumer):
         """Order Book Depth Details
 
         Args:
-            ticker_id: any ``ticker_id`` from /pairs
-            depth: (not required) Orders depth quantity, 0 or empty returns full depth Depth 100 means 50 for each bid/ask side
+            ticker_id: (str) any ``ticker_id`` from /pairs
+            depth: (Optional[int]) Orders depth quantity, 0 or empty returns full depth Depth 100 means 50 for each bid/ask side
         """
 
     @get("v1/prices/historical_trades")
@@ -196,11 +198,11 @@ class Dexie(Consumer):
         """Historical Trades
 
         Args:
-            ticker_id: any ticker_id from /pairs, eg ``XCH_DBX``
-            type_: "buy" or "sell"
-            limit: (int) Number of historical trades to retrieve from time of query. Default is 1000, set to 0 for all.
-            start_time: (timestamp in milliseconds) Start time from which to query historical trades from
-            end_time: (timestamp in milliseconds) End time for historical trades query
+            ticker_id: (str) any ticker_id from /pairs, eg ``XCH_DBX``
+            type_: (Optional[str]) "buy" or "sell"
+            limit: (Optional[int]) Number of historical trades to retrieve from time of query. Default is 1000, set to 0 for all.
+            start_time: (Optional[str]) timestamp in milliseconds. Start time from which to query historical trades from
+            end_time: (Optional[str]) timestamp in milliseconds. End time for historical trades query
         """
 
 
@@ -277,9 +279,7 @@ class DexieResponseFactory(converters.Factory):
         return self._make_converter(_DexieResponseBody, cls)
 
 
-# Utility Functions
-
-
+# Chia offer data utils
 def offer_bytes_to_dexie_id(offer: bytes) -> str:
     """Take offer encoded as bytes and return a dexie offer id
 
@@ -291,4 +291,21 @@ def offer_bytes_to_dexie_id(offer: bytes) -> str:
 
 def offer_str_to_dexie_id(offer: str) -> str:
     """Take offer str and return a dexie offer id"""
-    return offer_bytes_to_dexie_id(bytes(offer))
+    return offer_bytes_to_dexie_id(bytes(offer, encoding="utf-8"))
+
+
+@dataclass(frozen=True)
+class DexieChiaOfferData:
+    dexie_id: str
+    offer_bytes: bytes
+    offer_str: str
+
+    @classmethod
+    def from_bytes(cls, offer: bytes) -> "DexieChiaOfferData":
+        """From bytes constructor"""
+        return cls(offer_bytes_to_dexie_id(offer), offer, str(offer))
+
+    @classmethod
+    def from_str(cls, offer: str) -> "DexieChiaOfferData":
+        """From str constructor"""
+        return cls(offer_str_to_dexie_id(offer), bytes(offer, encoding="utf-8"), offer)
