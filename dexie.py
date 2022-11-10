@@ -24,6 +24,7 @@ from uplink import (
 
 class DexieOfferStatus(Enum):
     """Enum for holding Dexie's vocab for offers"""
+
     ACTIVE = 0
     PENDING = 1
     CANCELLING = 2
@@ -34,6 +35,7 @@ class DexieOfferStatus(Enum):
 
 class DexieSortQuery(Enum):
     """Enum for holding Dexie's vocab for sorting from prices"""
+
     PRICE = "price"
     PRICE_DESCENDING = "price_desc"
     DATE_COMPLETED = "date_completed"
