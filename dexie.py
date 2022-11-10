@@ -189,7 +189,7 @@ class Dexie(Consumer):
         limit: Query = None,
         start_time: Query = None,
         end_time: Query = None,
-    ) -> list[DexieTrade]:
+    ) -> DexieHistoricalTrade:
         """Historical Trades
 
         Args:
@@ -217,6 +217,7 @@ def get_offer_status(offer: DexieOffer):
     """Just grab the status.
 
     Useful for batch processing status of many offers.
+    DEPRECATED
 
     Args:
         offer_status: (DexieOffer) the response from a ``Dexie.get_offer`` request
@@ -225,57 +226,68 @@ def get_offer_status(offer: DexieOffer):
 
 
 class _DexieResponseBody(converters.Converter):
-    def __init__(self, model):
+    def __init__(self, model, model_cls):
         self._model = model
+        self._model_cls = model_cls
 
-    def convert(self, response):
+    def convert(self, value):
         try:
-            data = response.json()
+            data = value.json()
 
         except AttributeError:
-            data = response
+            # this is a safe fallback that should be forwards compatible to
+            # pass-through any other dexie data IF theres a method to call it
+            data = value
 
         if data.get("success"):
-            # sometimes we do need to inject more data like HistoricalTrades
-            # which doesn't just have a single key with all the data
-            # we could detect it here, but we can maybe also pass the req_def
-            return data[self._model]
+            if self._model:
+                # sometimes we do need to inject more data like HistoricalTrades
+                # which doesn't just have a single key with all the data
+                # we could detect it here, but we can maybe also pass the req_def
+                if self._model.endswith("s"):
+                    datas = data[self._model]
+                    return [self._model_cls(**data) for data in datas]
+                return self._model_cls(**data[self._model])
+            del data["success"]
+            # alt catchall
+            # pop of success if its success
+            # if one key remains, make that the primary return;
+            # else make everything else
+            # if len(data.keys()) == 1:
+            #     return {**data[data.keys()[0]]}
+            return self._model_cls(**data)
 
-        return None
+        return data
 
 
 @install
 class DexieResponseFactory(converters.Factory):
-    def _get_model(self, type_):
+    def _get_model_new_type(self, type_):
         if type_ == DexieOffer:
-            return "offer"
+            return "offer", DexieOffer
         if type_ == list[DexieOffer]:
-            return "offers"
+            return "offers", DexieOffer
         if type_ == list[DexiePair]:
-            return "pairs"
+            return "pairs", DexiePair
         if type_ == list[DexieTicker]:
-            return "tickers"
+            return "tickers", DexieTicker
         if type_ == DexieOrderBook:
-            return "orderbook"
-        # if type_ == DexieHistoricalTrade:
-        #     # TODO
-        #     return trades
-        if type_ == list[DexieTrade]:
-            # this is a hack we miss out on the proper header info
-            return "trades"
+            return "orderbook", DexieOrderBook
+        if type_ == DexieHistoricalTrade:
+            return None, DexieHistoricalTrade
+        # if type_ == list[DexieTrade]:
+        #     # this is a hack we miss out on the proper header info
+        #     return "trades", DexieTrade
         raise ValueError("Model not defined short circuit")
 
     def _make_converter(self, converter, type_):
         try:
-            model = self._get_model(type_)
+            model, new_type = self._get_model_new_type(type_)
         except ValueError:
             print("hit here")
             return None
-        return converter(model)
+        return converter(model, new_type)
 
     # def create_response_body_converter(self, cls, *args, **kwargs):
     def create_response_body_converter(self, cls, request_definition):
-        print("cls", cls, "request_definition", request_definition)
-        print(type(cls), type(request_definition))
-
         return self._make_converter(_DexieResponseBody, cls)
