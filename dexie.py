@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Optional, Callable, List
+from typing import Any, Callable, List, Literal, Optional, Union
 
 import base58
 from uplink import (
@@ -61,10 +61,6 @@ class DexieOffer:
     previous_price: Optional[Decimal] = None
 
 
-# class DexieOffers(DexieOffer):
-#     pass
-
-
 @dataclass(frozen=True, unsafe_hash=True)
 class DexiePair:
     ticker_id: str
@@ -88,6 +84,30 @@ class DexieTicker:
     high: Decimal
     low: Decimal
 
+@dataclass(frozen=True)
+class DexieOrderBook:
+    ticker_id: str
+    pool_id: str
+    timestamp: str
+    bids: list[Any]
+    asks: list[Any]
+
+@dataclass(frozen=True)
+class DexieTrade:
+    trade_id: str
+    price: Decimal
+    base_volume: Decimal
+    target_volume: Decimal
+    trade_timestamp: str
+    # type: "buy" | "sell"
+    type: Union[Literal["buy"], Literal["sell"]]
+
+@dataclass(frozen=True)
+class DexieHistoricalTrade:
+    ticker_id: str
+    pool_id: str
+    timestamp: str
+    trades: DexieTrade
 
 @returns.json
 class Dexie(Consumer):
@@ -150,7 +170,7 @@ class Dexie(Consumer):
         """
 
     @get("v1/prices/orderbook")
-    def get_orderbook(self, ticker_id: Query, depth: Query = None):
+    def get_orderbook(self, ticker_id: Query, depth: Query = None) -> DexieOrderBook:
         """Order Book Depth Details
 
         Args:
@@ -166,7 +186,7 @@ class Dexie(Consumer):
         limit: Query = None,
         start_time: Query = None,
         end_time: Query = None,
-    ):
+    ) -> list[DexieTrade]:
         """Historical Trades
 
         Args:
@@ -201,20 +221,6 @@ def get_offer_status(offer: DexieOffer):
     return offer.status
 
 
-# @install
-# @loads.from_json(DexieOffer)
-# def offer_json_reader(offer_cls, json_):
-#     """Default serialize method for loading an DexieOffer"""
-#     if json_.get("success"):
-#         # I don't know if uplink has a better way to handle this
-#         # leveraging how it uses type annotations
-#         if offers := json_.get("offers"):
-#             return [offer_cls(**offer) for offer in offers]
-#         if offer := json_.get("offer"):
-#             return offer_cls(**offer)
-#     return None
-
-
 class _DexieResponseBody(converters.Converter):
     def __init__(self, model):
         self._model = model
@@ -226,9 +232,10 @@ class _DexieResponseBody(converters.Converter):
         except AttributeError:
             data = response
 
-        print("data is", data)
-        print("model is", self._model)
         if data.get("success"):
+            # sometimes we do need to inject more data like HistoricalTrades
+            # which doesn't just have a single key with all the data
+            # we could detect it here, but we can maybe also pass the req_def
             return data[self._model]
 
         return None
@@ -245,13 +252,21 @@ class DexieResponseFactory(converters.Factory):
             return "pairs"
         if type_ == list[DexieTicker]:
             return "tickers"
+        if type_ == DexieOrderBook:
+            return "orderbook"
+        # if type_ == DexieHistoricalTrade:
+        #     # TODO
+        #     return trades
+        if type_ == list[DexieTrade]:
+            # this is a hack we miss out on the proper header info
+            return "trades"
         raise ValueError("Model not defined short circuit")
 
     def _make_converter(self, converter, type_):
         try:
             model = self._get_model(type_)
         except ValueError:
-            # print("hit here")
+            print("hit here")
             return None
         return converter(model)
 
@@ -262,7 +277,3 @@ class DexieResponseFactory(converters.Factory):
 
         return self._make_converter(_DexieResponseBody, cls)
 
-    #     def handler(response):
-    #         if response.get("success"):
-    #             return
-    # return lambda response:
