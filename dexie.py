@@ -229,10 +229,9 @@ class _DexieResponseBody(converters.Converter):
 
             # sometimes we do need to inject more data like HistoricalTrades
             # which doesn't just have a single key with all the data
-            # we could detect it here, but we can maybe also pass the req_def
-            # we wrap our data with our model_cls
             # remove the response success key, which we no longer need
             model_data = {k: data[k] for k in data if k != "success"}
+            # we wrap our data with our model_cls
             return self._model_cls(**model_data)
 
         return data
