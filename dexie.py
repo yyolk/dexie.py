@@ -84,6 +84,7 @@ class DexieTicker:
     high: Decimal
     low: Decimal
 
+
 @dataclass(frozen=True)
 class DexieOrderBook:
     ticker_id: str
@@ -92,6 +93,7 @@ class DexieOrderBook:
     bids: list[Any]
     asks: list[Any]
 
+
 @dataclass(frozen=True)
 class DexieTrade:
     trade_id: str
@@ -99,8 +101,8 @@ class DexieTrade:
     base_volume: Decimal
     target_volume: Decimal
     trade_timestamp: str
-    # type: "buy" | "sell"
     type: Union[Literal["buy"], Literal["sell"]]
+
 
 @dataclass(frozen=True)
 class DexieHistoricalTrade:
@@ -108,6 +110,7 @@ class DexieHistoricalTrade:
     pool_id: str
     timestamp: str
     trades: DexieTrade
+
 
 @returns.json
 class Dexie(Consumer):
@@ -276,4 +279,3 @@ class DexieResponseFactory(converters.Factory):
         print(type(cls), type(request_definition))
 
         return self._make_converter(_DexieResponseBody, cls)
-
