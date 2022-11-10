@@ -56,6 +56,30 @@ Decimal('30.43791071338040603262456230')
 ```
 
 
+# Development
+
+```sh
+hatch env create
+```
+
+
+## Tests
+
+```sh
+hatch run test
+```
+
+
+## Versioning
+
+```sh
+hatch version <major.minor.patch>
+```
+
+
+
+
+
 
 ## TODO
 
