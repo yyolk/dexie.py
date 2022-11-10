@@ -1,9 +1,10 @@
 """
 dexie.py
 """
-import decimal
+
 import hashlib
 from dataclasses import dataclass
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional, Callable, List
 
@@ -23,6 +24,7 @@ from uplink import (
     utils,
 )
 
+
 class DexieOfferStatus(Enum):
     ACTIVE = 0
     PENDING = 1
@@ -38,8 +40,9 @@ class DexieSortQuery(Enum):
     DATE_COMPLETED = "date_completed"
     DATE_FOUND = "date_found"
 
+
 @dataclass(frozen=True, unsafe_hash=True)
-class DexieOffer():
+class DexieOffer:
     id: str
     status: DexieOfferStatus
     offer: str
@@ -48,18 +51,42 @@ class DexieOffer():
     date_completed: str
     date_pending: str
     spent_block_index: int
-    price: decimal.Decimal
+    price: Decimal
     offered: list[dict]
     requested: list[dict]
-    fees: decimal.Decimal
+    fees: Decimal
     mempool: Optional[Any]
     related_offers: list[dict]
     coins: Optional[list[dict]] = None
-    previous_price: Optional[decimal.Decimal] = None
+    previous_price: Optional[Decimal] = None
 
 
-class DexieOffers(DexieOffer):
-    pass
+# class DexieOffers(DexieOffer):
+#     pass
+
+
+@dataclass(frozen=True, unsafe_hash=True)
+class DexiePair:
+    ticker_id: str
+    base: str
+    target: str
+    pool_id: str
+
+
+@dataclass(frozen=True, unsafe_hash=True)
+class DexieTicker:
+    ticker_id: str
+    base_currency: str
+    target_currency: str
+    last_price: Decimal
+    current_avg_price: Decimal
+    base_volume: Decimal
+    target_volume: Decimal
+    pool_id: str
+    bid: Decimal
+    ask: Decimal
+    high: Decimal
+    low: Decimal
 
 
 @returns.json
@@ -102,9 +129,6 @@ class Dexie(Consumer):
             page_size: (uplink.Query) How many offers to request. For more than 100 offers use ``page``.
         """
 
-
-
-
     @get("v1/offers/{id_}")
     def get_offer(self, id_) -> DexieOffer:
         """Inspect an offer
@@ -114,11 +138,11 @@ class Dexie(Consumer):
         """
 
     @get("v1/prices/pairs")
-    def get_pairs(self):
+    def get_pairs(self) -> list[DexiePair]:
         """Get all traded XCH-CAT Pairs"""
 
     @get("v1/prices/tickers")
-    def get_tickers(self, ticker_id: Query = None):
+    def get_tickers(self, ticker_id: Query = None) -> list[DexieTicker]:
         """Tickers (Market and Price Data)
 
         Args:
@@ -164,6 +188,8 @@ def offer_file_to_dexie_id(offerfile: bytes):
         offerfile: (bytes) The serialized offer file as bytes
     """
     return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
+
+
 def get_offer_status(offer: DexieOffer):
     """Just grab the status.
 
@@ -188,6 +214,7 @@ def get_offer_status(offer: DexieOffer):
 #             return offer_cls(**offer)
 #     return None
 
+
 class _DexieResponseBody(converters.Converter):
     def __init__(self, model):
         self._model = model
@@ -195,15 +222,13 @@ class _DexieResponseBody(converters.Converter):
     def convert(self, response):
         try:
             data = response.json()
-            # if resp_data := response.json().get("success"):
 
         except AttributeError:
             data = response
 
-        print('data is', data)
-        print('model is', self._model)
+        print("data is", data)
+        print("model is", self._model)
         if data.get("success"):
-            # return self._model.parse_obj(data)
             return data[self._model]
 
         return None
@@ -211,35 +236,33 @@ class _DexieResponseBody(converters.Converter):
 
 @install
 class DexieResponseFactory(converters.Factory):
-    def __init__(self):
-        self._converted = False
-        self._converter = None
-
     def _get_model(self, type_):
         if type_ == DexieOffer:
             return "offer"
         if type_ == list[DexieOffer]:
             return "offers"
+        if type_ == list[DexiePair]:
+            return "pairs"
+        if type_ == list[DexieTicker]:
+            return "tickers"
         raise ValueError("Model not defined short circuit")
 
-
     def _make_converter(self, converter, type_):
-        if not self._converted:
-            try:
-                model = self._get_model(type_)
-            except ValueError:
-                print("hit here")
-                return None
-            self._converted = True
-            self._converter = converter(model)
-        return self._converter
+        try:
+            model = self._get_model(type_)
+        except ValueError:
+            # print("hit here")
+            return None
+        return converter(model)
+
     # def create_response_body_converter(self, cls, *args, **kwargs):
     def create_response_body_converter(self, cls, request_definition):
-        print("cls",cls,"request_definition", request_definition)
+        print("cls", cls, "request_definition", request_definition)
         print(type(cls), type(request_definition))
 
         return self._make_converter(_DexieResponseBody, cls)
+
     #     def handler(response):
     #         if response.get("success"):
-    #             return 
-    # return lambda response: 
+    #             return
+    # return lambda response:
