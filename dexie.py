@@ -5,7 +5,7 @@ import decimal
 import hashlib
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, List
 
 import base58
 from uplink import (
@@ -19,6 +19,8 @@ from uplink import (
     json as sends_json,
     post,
     returns,
+    types,
+    utils,
 )
 
 class DexieOfferStatus(Enum):
@@ -36,7 +38,7 @@ class DexieSortQuery(Enum):
     DATE_COMPLETED = "date_completed"
     DATE_FOUND = "date_found"
 
-@dataclass
+@dataclass(frozen=True, unsafe_hash=True)
 class DexieOffer():
     id: str
     status: DexieOfferStatus
@@ -55,6 +57,9 @@ class DexieOffer():
     coins: Optional[list[dict]] = None
     previous_price: Optional[decimal.Decimal] = None
 
+
+class DexieOffers(DexieOffer):
+    pass
 
 
 @returns.json
@@ -159,38 +164,82 @@ def offer_file_to_dexie_id(offerfile: bytes):
         offerfile: (bytes) The serialized offer file as bytes
     """
     return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
-
-
-def get_offer_status(offer_status):
+def get_offer_status(offer: DexieOffer):
     """Just grab the status.
 
     Useful for batch processing status of many offers.
 
     Args:
-        offer_status: (Dict) the response from a ``Dexie.get_offer`` request
+        offer_status: (DexieOffer) the response from a ``Dexie.get_offer`` request
     """
-    offer = offer_status.get("offer")
-    if offer:
-        return DexieOfferStatus(offer["status"])
-    return None
-
-
-@install
-@loads.from_json(DexieOffer)
-def offer_json_reader(offer_cls, json_):
-    """Default serialize method for loading an DexieOffer"""
-    if json_.get("success"):
-        if offers := json_.get("offers"):
-            return [offer_cls(**offer) for offer in offers]
-        if offer := json_.get("offer"):
-            return offer_cls(**offer)
-    return None
+    return offer.status
 
 
 # @install
-# class DexieResponseFactory(converters.Factory):
-#     def create_response_body_converter(self, cls, request_definition)
-#         def handler(response):
-#             if response.get("success"):
-#                 return 
-#     return lambda response: 
+# @loads.from_json(DexieOffer)
+# def offer_json_reader(offer_cls, json_):
+#     """Default serialize method for loading an DexieOffer"""
+#     if json_.get("success"):
+#         # I don't know if uplink has a better way to handle this
+#         # leveraging how it uses type annotations
+#         if offers := json_.get("offers"):
+#             return [offer_cls(**offer) for offer in offers]
+#         if offer := json_.get("offer"):
+#             return offer_cls(**offer)
+#     return None
+
+class _DexieResponseBody(converters.Converter):
+    def __init__(self, model):
+        self._model = model
+
+    def convert(self, response):
+        try:
+            data = response.json()
+            # if resp_data := response.json().get("success"):
+
+        except AttributeError:
+            data = response
+
+        print('data is', data)
+        print('model is', self._model)
+        if data.get("success"):
+            # return self._model.parse_obj(data)
+            return data[self._model]
+
+        return None
+
+
+@install
+class DexieResponseFactory(converters.Factory):
+    def __init__(self):
+        self._converted = False
+        self._converter = None
+
+    def _get_model(self, type_):
+        if type_ == DexieOffer:
+            return "offer"
+        if type_ == list[DexieOffer]:
+            return "offers"
+        raise ValueError("Model not defined short circuit")
+
+
+    def _make_converter(self, converter, type_):
+        if not self._converted:
+            try:
+                model = self._get_model(type_)
+            except ValueError:
+                print("hit here")
+                return None
+            self._converted = True
+            self._converter = converter(model)
+        return self._converter
+    # def create_response_body_converter(self, cls, *args, **kwargs):
+    def create_response_body_converter(self, cls, request_definition):
+        print("cls",cls,"request_definition", request_definition)
+        print(type(cls), type(request_definition))
+
+        return self._make_converter(_DexieResponseBody, cls)
+    #     def handler(response):
+    #         if response.get("success"):
+    #             return 
+    # return lambda response: 
