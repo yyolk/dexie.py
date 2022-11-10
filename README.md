@@ -73,7 +73,11 @@ hatch run test
 ## Versioning
 
 ```sh
-hatch version <major.minor.patch>
+# hatch version <major.minor.patch>
+# e.g.:
+$ hatch version 0.1.0
+Old: 0.0.10
+New: 0.1.0
 ```
 
 
