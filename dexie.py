@@ -210,31 +210,32 @@ class _DexieResponseBody(converters.Converter):
     def convert(self, value):
         try:
             data = value.json()
-            if data.get("success"):
-                if self._model:
-                    # sometimes we do need to inject more data like HistoricalTrades
-                    # which doesn't just have a single key with all the data
-                    # we could detect it here, but we can maybe also pass the req_def
-                    if self._model.endswith("s"):
-                        datas = data[self._model]
-                        return [self._model_cls(**data) for data in datas]
-                    return self._model_cls(**data[self._model])
-
-                del data["success"]
-                # alt catchall
-                # pop of success if its success
-                # if one key remains, make that the primary return;
-                # else make everything else
-                # if len(data.keys()) == 1:
-                #     return {**data[data.keys()[0]]}
-
-                # we wrap our data with our model_cls
-                return self._model_cls(**data)
 
         except AttributeError:
             # this is a safe fallback that should be forwards compatible to
             # pass-through any other dexie data IF theres a method to call it
             data = value
+
+        if data.get("success"):
+            if self._model:
+                # sometimes we do need to inject more data like HistoricalTrades
+                # which doesn't just have a single key with all the data
+                # we could detect it here, but we can maybe also pass the req_def
+                if self._model.endswith("s"):
+                    datas = data[self._model]
+                    return [self._model_cls(**data) for data in datas]
+                return self._model_cls(**data[self._model])
+
+            del data["success"]
+            # alt catchall
+            # pop of success if its success
+            # if one key remains, make that the primary return;
+            # else make everything else
+            # if len(data.keys()) == 1:
+            #     return {**data[data.keys()[0]]}
+
+            # we wrap our data with our model_cls
+            return self._model_cls(**data)
 
         return data
 
