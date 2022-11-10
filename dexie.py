@@ -256,6 +256,9 @@ class DexieResponseFactory(converters.Factory):
         # if type_ == list[DexieTrade]:
         #     # this is a hack we miss out on the proper header info
         #     return "trades", DexieTrade
+        # TODO this is kinda a lame way to leave some way to hook in if the
+        # model isn't known for logging but fall back safely without a
+        # performance hit
         raise ValueError(
             (
                 "Model not defined. This is a silent error caught in"
