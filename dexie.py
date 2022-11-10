@@ -227,16 +227,9 @@ class _DexieResponseBody(converters.Converter):
                     return [self._model_cls(**data) for data in datas]
                 return self._model_cls(**data[self._model])
 
-            del data["success"]
-            # alt catchall
-            # pop of success if its success
-            # if one key remains, make that the primary return;
-            # else make everything else
-            # if len(data.keys()) == 1:
-            #     return {**data[data.keys()[0]]}
-
             # we wrap our data with our model_cls
-            return self._model_cls(**data)
+            usefuldata = data.fromkeys(set(data.keys()).difference({"success"}))
+            return self._model_cls(**usefuldata)
 
         return data
 
