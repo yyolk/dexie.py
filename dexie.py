@@ -305,5 +305,5 @@ class DexieChiaOffer:
 
     @classmethod
     def from_str(cls, offer: str) -> "DexieChiaOffer":
-        """From string constructor"""
+        """From str constructor"""
         return cls(offer_str_to_dexie_id(offer), bytes(offer, encoding="utf-8"), offer)
