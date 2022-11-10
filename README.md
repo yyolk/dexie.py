@@ -48,7 +48,7 @@ Price API also included
 >>> dc.get_tickers()
 {...}
 # calculate the current price from ticker data
->>> ticker = dc.get_tickers("XCH_USDS)["tickers"][0]
+>>> ticker = dc.get_tickers("XCH_USDS")[0]
 >>> base_vol, target_vol = ticker["base_volume"], ticker["target_volume"]
 >>> from decimal import Decimal
 >>> Decimal(target_vol) / Decimal(base_vol)
