@@ -38,14 +38,27 @@ classifiers = [
 "Homepage" = "https://github.com/yyolk/dexie.py"
 "Bug Tracker" = "https://github.com/yyolk/dexie.py/issues"
 
+
+# I can do this with Hatch :D
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest tests/*"
+
+# a separate test env, run with:
+# `hatch run +py=310 test:pytest`
+#
 [tool.hatch.envs.test]
 dependencies = [
     "pytest"
 ]
 
 [tool.hatch.envs.test.scripts]
-ptest = "pytest tests/*"
+test = "pytest tests/*"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["310", "311"]
-
