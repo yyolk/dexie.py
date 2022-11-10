@@ -230,7 +230,7 @@ class _DexieResponseBody(converters.Converter):
                 return self._model_cls(**data[self._model])
 
             # we wrap our data with our model_cls
-            # model_data = data.fromkeys(set(data.keys()).difference({"success"}))
+            # remove the response success key, which we no longer need
             model_data = {k: data[k] for k in data if k != "success"}
             return self._model_cls(**model_data)
 
