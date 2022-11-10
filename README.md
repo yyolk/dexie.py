@@ -27,7 +27,7 @@ Basically you need to
 >>> import dexie
 
 # initialize the api client
-# the base_url can be either for mainnet or testnet
+# the base_url can be either for mainnet or testnet (or your own)
 # use https://api.dexie.space for mainnet
 # use https://api-testnet.dexie.space for testnet
 >>> dc = dexie.Dexie(base_url="https://api.dexie.space")
