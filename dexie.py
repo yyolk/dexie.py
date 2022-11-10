@@ -261,7 +261,12 @@ class DexieResponseFactory(converters.Factory):
         # if type_ == list[DexieTrade]:
         #     # this is a hack we miss out on the proper header info
         #     return "trades", DexieTrade
-        raise ValueError("Model not defined short circuit")
+        raise ValueError(
+            (
+                "Model not defined. This is a silent error caught in"
+                " our private method. You shouldn't see this!"
+            )
+        )
 
     def _make_converter(self, converter, type_):
         try:
