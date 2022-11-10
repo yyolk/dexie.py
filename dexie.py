@@ -201,30 +201,6 @@ class Dexie(Consumer):
         """
 
 
-# Utility Functions
-
-
-def offer_file_to_dexie_id(offerfile: bytes):
-    """Take offerfile encoded as bytes and return a dexie offerfile id
-
-    Args:
-        offerfile: (bytes) The serialized offer file as bytes
-    """
-    return base58.b58encode(hashlib.sha256(offerfile).digest()).decode()
-
-
-def get_offer_status(offer: DexieOffer):
-    """Just grab the status.
-
-    Useful for batch processing status of many offers.
-    DEPRECATED
-
-    Args:
-        offer_status: (DexieOffer) the response from a ``Dexie.get_offer`` request
-    """
-    return offer.status
-
-
 class _DexieResponseBody(converters.Converter):
     def __init__(self, model, model_cls):
         self._model = model
@@ -259,11 +235,12 @@ class _DexieResponseBody(converters.Converter):
             # pass-through any other dexie data IF theres a method to call it
             data = value
 
-
         return data
+
 
 @install
 class DexieResponseFactory(converters.Factory):
+    """Unpack a response to make the data immediately usable with our models"""
     def _get_model_new_type(self, type_):
         if type_ == DexieOffer:
             return "offer", DexieOffer
@@ -285,11 +262,31 @@ class DexieResponseFactory(converters.Factory):
     def _make_converter(self, converter, type_):
         try:
             model, new_type = self._get_model_new_type(type_)
+            return converter(model, new_type)
         except ValueError:
-            print("hit here")
-            return None
-        return converter(model, new_type)
+            # this happens if we don't know the model
+            # for faster dev i think making the client fall back to vanilla
+            # response is appropriate
+            pass
+        return None
 
     # def create_response_body_converter(self, cls, *args, **kwargs):
     def create_response_body_converter(self, cls, request_definition):
         return self._make_converter(_DexieResponseBody, cls)
+
+
+# Utility Functions
+
+
+def offer_bytes_to_dexie_id(offer: bytes) -> str:
+    """Take offer encoded as bytes and return a dexie offer id
+
+    Args:
+        offer: (bytes) The serialized offer file as bytes
+    """
+    return base58.b58encode(hashlib.sha256(offer).digest()).decode()
+
+
+def offer_str_to_dexie_id(offer: str) -> str:
+    """Take offer str and return a dexie offer id"""
+    return offer_bytes_to_dexie_id(bytes(offer))
