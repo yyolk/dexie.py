@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import base58
 from uplink import (
@@ -16,16 +16,14 @@ from uplink import (
     converters,
     get,
     install,
-    loads,
     json as sends_json,
     post,
     returns,
-    types,
-    utils,
 )
 
 
 class DexieOfferStatus(Enum):
+    """Enum for holding Dexie's vocab for offers"""
     ACTIVE = 0
     PENDING = 1
     CANCELLING = 2
@@ -35,6 +33,7 @@ class DexieOfferStatus(Enum):
 
 
 class DexieSortQuery(Enum):
+    """Enum for holding Dexie's vocab for sorting from prices"""
     PRICE = "price"
     PRICE_DESCENDING = "price_desc"
     DATE_COMPLETED = "date_completed"
