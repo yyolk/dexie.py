@@ -116,6 +116,7 @@ class DexieHistoricalTrade:
 @returns.json
 class Dexie(Consumer):
     """Uplink DSL Dexie.Space API Client"""
+
     @sends_json
     @post("v1/offers")
     def post_offer(self, offer: Field):
