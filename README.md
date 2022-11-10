@@ -65,8 +65,14 @@ hatch env create
 
 ## Tests
 
+Run tests during development
 ```sh
 hatch run test
+```
+
+Run tests with matrix in ci
+```sh
+hatch run +py=39,310 test:pytest
 ```
 
 

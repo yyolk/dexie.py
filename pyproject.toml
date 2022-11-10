@@ -59,10 +59,7 @@ dependencies = [
 [tool.hatch.envs.default.scripts]
 test = "pytest tests/dexie.py"
 
-# a separate test env, run with:
-# `hatch run +py=310 test:pytest`
-#
-# not using this yet ;)
+# not using this matrix env (yet) ;)
 [tool.hatch.envs.test]
 dependencies = [
     "pytest"
@@ -72,4 +69,9 @@ dependencies = [
 test = "pytest tests/*"
 
 [[tool.hatch.envs.test.matrix]]
-python = ["310", "311"]
+python = [
+    # keeping around for a minute, see #11
+    "39",
+    "310",
+    "311",
+]
