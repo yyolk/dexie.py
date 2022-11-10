@@ -42,7 +42,7 @@ class DexieSortQuery(Enum):
     DATE_FOUND = "date_found"
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True)
 class DexieOffer:
     id: str
     status: DexieOfferStatus
@@ -62,7 +62,7 @@ class DexieOffer:
     previous_price: Optional[Decimal] = None
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True)
 class DexiePair:
     ticker_id: str
     base: str
@@ -70,7 +70,7 @@ class DexiePair:
     pool_id: str
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True)
 class DexieTicker:
     ticker_id: str
     base_currency: str
