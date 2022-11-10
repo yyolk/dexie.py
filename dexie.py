@@ -123,7 +123,7 @@ class Dexie(Consumer):
         """Post an offer to dexie
 
         Args:
-            offer: (uplink.Field) UTF-8 encoded offerfile
+            offer: (uplink.Field) an offer string
         """
 
     @get("v1/offers")
@@ -160,7 +160,7 @@ class Dexie(Consumer):
         """Inspect an offer
 
         Args:
-            id_: Base58 encoded SHA256 Hash of the offer file (Dexie's OfferFile Id)
+            id_: (str) Base58 encoded SHA256 Hash of the offer file (Dexie's OfferFile Id)
         """
 
     @get("v1/prices/pairs")
@@ -172,7 +172,7 @@ class Dexie(Consumer):
         """Tickers (Market and Price Data)
 
         Args:
-            ticker_id: (not required) any ``ticker_id`` from /pairs
+            ticker_id: (Optional[str]) any ``ticker_id`` from /pairs
         """
 
     @get("v1/prices/orderbook")
@@ -180,8 +180,8 @@ class Dexie(Consumer):
         """Order Book Depth Details
 
         Args:
-            ticker_id: any ``ticker_id`` from /pairs
-            depth: (not required) Orders depth quantity, 0 or empty returns full depth Depth 100 means 50 for each bid/ask side
+            ticker_id: (str) any ``ticker_id`` from /pairs
+            depth: (Optional[int]) Orders depth quantity, 0 or empty returns full depth Depth 100 means 50 for each bid/ask side
         """
 
     @get("v1/prices/historical_trades")
@@ -196,11 +196,11 @@ class Dexie(Consumer):
         """Historical Trades
 
         Args:
-            ticker_id: any ticker_id from /pairs, eg ``XCH_DBX``
-            type_: "buy" or "sell"
+            ticker_id: (str) any ticker_id from /pairs, eg ``XCH_DBX``
+            type_: (str) "buy" or "sell"
             limit: (int) Number of historical trades to retrieve from time of query. Default is 1000, set to 0 for all.
-            start_time: (timestamp in milliseconds) Start time from which to query historical trades from
-            end_time: (timestamp in milliseconds) End time for historical trades query
+            start_time: (str) timestamp in milliseconds. Start time from which to query historical trades from
+            end_time: (str) timestamp in milliseconds. End time for historical trades query
         """
 
 
@@ -278,8 +278,6 @@ class DexieResponseFactory(converters.Factory):
 
 
 # Utility Functions
-
-
 def offer_bytes_to_dexie_id(offer: bytes) -> str:
     """Take offer encoded as bytes and return a dexie offer id
 
@@ -291,4 +289,21 @@ def offer_bytes_to_dexie_id(offer: bytes) -> str:
 
 def offer_str_to_dexie_id(offer: str) -> str:
     """Take offer str and return a dexie offer id"""
-    return offer_bytes_to_dexie_id(bytes(offer))
+    return offer_bytes_to_dexie_id(bytes(offer, encoding="utf-8"))
+
+
+@dataclass(frozen=True)
+class DexieChiaOffer:
+    dexie_id: str
+    offer_bytes: bytes
+    offer_str: str
+
+    @classmethod
+    def from_bytes(cls, offer: bytes) -> "DexieChiaOffer":
+        """From bytes constructor"""
+        return cls(offer_bytes_to_dexie_id(offer), offer, str(offer))
+
+    @classmethod
+    def from_str(cls, offer: str) -> "DexieChiaOffer":
+        """From string constructor"""
+        return cls(offer_str_to_dexie_id(offer), bytes(offer, encoding="utf-8"), offer)
