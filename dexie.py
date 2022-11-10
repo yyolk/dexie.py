@@ -1,9 +1,25 @@
+"""
+dexie.py
+"""
+import decimal
 import hashlib
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Optional, Callable
 
 import base58
-from uplink import Consumer, Field, Query, get, json, post, returns
-
+from uplink import (
+    Consumer,
+    Field,
+    Query,
+    converters,
+    get,
+    install,
+    loads,
+    json as sends_json,
+    post,
+    returns,
+)
 
 class DexieOfferStatus(Enum):
     ACTIVE = 0
@@ -20,10 +36,30 @@ class DexieSortQuery(Enum):
     DATE_COMPLETED = "date_completed"
     DATE_FOUND = "date_found"
 
+@dataclass
+class DexieOffer():
+    id: str
+    status: DexieOfferStatus
+    offer: str
+    offered_coins: list[str]
+    date_found: str
+    date_completed: str
+    date_pending: str
+    spent_block_index: int
+    price: decimal.Decimal
+    offered: list[dict]
+    requested: list[dict]
+    fees: decimal.Decimal
+    mempool: Optional[Any]
+    related_offers: list[dict]
+    coins: Optional[list[dict]] = None
+    previous_price: Optional[decimal.Decimal] = None
+
+
 
 @returns.json
 class Dexie(Consumer):
-    @json
+    @sends_json
     @post("v1/offers")
     def post_offer(self, offer: Field):
         """Post an offer to dexie
@@ -31,7 +67,6 @@ class Dexie(Consumer):
         Args:
             offer: (uplink.Field) UTF-8 encoded offerfile
         """
-        pass
 
     @get("v1/offers")
     def search_offers(
@@ -45,7 +80,7 @@ class Dexie(Consumer):
         include_multiple_requested: Query = None,
         page: Query = None,
         page_size: Query = None,
-    ):
+    ) -> list[DexieOffer]:
         """Search Offers
 
         All arguments are optional. Call without args to get latest offers.
@@ -61,21 +96,21 @@ class Dexie(Consumer):
             page: (uplink.Query) Request a specific page.
             page_size: (uplink.Query) How many offers to request. For more than 100 offers use ``page``.
         """
-        pass
+
+
+
 
     @get("v1/offers/{id_}")
-    def get_offer(self, id_):
+    def get_offer(self, id_) -> DexieOffer:
         """Inspect an offer
 
         Args:
             id_: Base58 encoded SHA256 Hash of the offer file (Dexie's OfferFile Id)
         """
-        pass
 
     @get("v1/prices/pairs")
     def get_pairs(self):
         """Get all traded XCH-CAT Pairs"""
-        pass
 
     @get("v1/prices/tickers")
     def get_tickers(self, ticker_id: Query = None):
@@ -84,7 +119,6 @@ class Dexie(Consumer):
         Args:
             ticker_id: (not required) any ``ticker_id`` from /pairs
         """
-        pass
 
     @get("v1/prices/orderbook")
     def get_orderbook(self, ticker_id: Query, depth: Query = None):
@@ -94,7 +128,6 @@ class Dexie(Consumer):
             ticker_id: any ``ticker_id`` from /pairs
             depth: (not required) Orders depth quantity, 0 or empty returns full depth Depth 100 means 50 for each bid/ask side
         """
-        pass
 
     @get("v1/prices/historical_trades")
     def get_historical_trades(
@@ -114,7 +147,6 @@ class Dexie(Consumer):
             start_time: (timestamp in milliseconds) Start time from which to query historical trades from
             end_time: (timestamp in milliseconds) End time for historical trades query
         """
-        pass
 
 
 # Utility Functions
@@ -140,3 +172,25 @@ def get_offer_status(offer_status):
     offer = offer_status.get("offer")
     if offer:
         return DexieOfferStatus(offer["status"])
+    return None
+
+
+@install
+@loads.from_json(DexieOffer)
+def offer_json_reader(offer_cls, json_):
+    """Default serialize method for loading an DexieOffer"""
+    if json_.get("success"):
+        if offers := json_.get("offers"):
+            return [offer_cls(**offer) for offer in offers]
+        if offer := json_.get("offer"):
+            return offer_cls(**offer)
+    return None
+
+
+# @install
+# class DexieResponseFactory(converters.Factory):
+#     def create_response_body_converter(self, cls, request_definition)
+#         def handler(response):
+#             if response.get("success"):
+#                 return 
+#     return lambda response: 
