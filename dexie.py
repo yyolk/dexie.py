@@ -110,7 +110,7 @@ class DexieHistoricalTrade:
     ticker_id: str
     pool_id: str
     timestamp: str
-    trades: DexieTrade
+    trades: list[DexieTrade]
 
 
 @returns.json
@@ -123,7 +123,7 @@ class Dexie(Consumer):
         """Post an offer to dexie
 
         Args:
-            offer: (uplink.Field) an offer string
+            offer: (str) an offer string
         """
 
     @get("v1/offers")
@@ -190,7 +190,7 @@ class Dexie(Consumer):
     def get_historical_trades(
         self,
         ticker_id: Query,
-        type_: Query(name="type") = None,
+        type: Query = None,
         limit: Query = None,
         start_time: Query = None,
         end_time: Query = None,
@@ -199,7 +199,7 @@ class Dexie(Consumer):
 
         Args:
             ticker_id: (str) any ticker_id from /pairs, eg ``XCH_DBX``
-            type_: (Optional[str]) "buy" or "sell"
+            type: (Optional[str]) "buy" or "sell"
             limit: (Optional[int]) Number of historical trades to retrieve from time of query. Default is 1000, set to 0 for all.
             start_time: (Optional[str]) timestamp in milliseconds. Start time from which to query historical trades from
             end_time: (Optional[str]) timestamp in milliseconds. End time for historical trades query
@@ -220,18 +220,19 @@ class _DexieResponseBody(converters.Converter):
             data = value
 
         if data.get("success"):
-            if self._model:
+            if self._model is not None:
                 # sometimes we do need to inject more data like HistoricalTrades
                 # which doesn't just have a single key with all the data
                 # we could detect it here, but we can maybe also pass the req_def
                 if self._model.endswith("s"):
                     datas = data[self._model]
-                    return [self._model_cls(**data) for data in datas]
+                    return [self._model_cls(**datum) for datum in datas]
                 return self._model_cls(**data[self._model])
 
             # we wrap our data with our model_cls
-            usefuldata = data.fromkeys(set(data.keys()).difference({"success"}))
-            return self._model_cls(**usefuldata)
+            # remove the response success key, which we no longer need
+            model_data = {k: data[k] for k in data if k != "success"}
+            return self._model_cls(**model_data)
 
         return data
 
@@ -253,12 +254,9 @@ class DexieResponseFactory(converters.Factory):
             return "orderbook", DexieOrderBook
         if type_ == DexieHistoricalTrade:
             return None, DexieHistoricalTrade
-        # if type_ == list[DexieTrade]:
-        #     # this is a hack we miss out on the proper header info
-        #     return "trades", DexieTrade
         # TODO this is kinda a lame way to leave some way to hook in if the
-        # model isn't known for logging but fall back safely without a
-        # performance hit
+        #      model isn't known for logging but fall back safely without a
+        #      performance hit
         raise ValueError(
             (
                 "Model not defined. This is a silent error caught in"
@@ -277,7 +275,6 @@ class DexieResponseFactory(converters.Factory):
             pass
         return None
 
-    # def create_response_body_converter(self, cls, *args, **kwargs):
     def create_response_body_converter(self, cls, request_definition):
         return self._make_converter(_DexieResponseBody, cls)
 
