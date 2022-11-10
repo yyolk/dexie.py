@@ -13,7 +13,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dexie.py"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
     { name="Joseph Chiocchi", email="joe@yolk.cc" },
 ]

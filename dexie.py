@@ -212,7 +212,7 @@ class _DexieResponseBody(converters.Converter):
         self._model_cls = model_cls
 
     def convert(self, value):
-        if hasattr(value, "json"):
+        if hasattr(value, "json") and callable(value.get("json")):
             data = value.json()
         else:
             # this is a safe fallback that should be forwards compatible to
@@ -221,17 +221,17 @@ class _DexieResponseBody(converters.Converter):
 
         if data.get("success"):
             if self._model is not None:
-                # sometimes we do need to inject more data like HistoricalTrades
-                # which doesn't just have a single key with all the data
-                # we could detect it here, but we can maybe also pass the req_def
+                # collections are plural
                 if self._model.endswith("s"):
                     datas = data[self._model]
                     return [self._model_cls(**datum) for datum in datas]
                 return self._model_cls(**data[self._model])
 
-            # we wrap our data with our model_cls
+            # sometimes we do need to inject more data like HistoricalTrades
+            # which doesn't just have a single key with all the data
             # remove the response success key, which we no longer need
             model_data = {k: data[k] for k in data if k != "success"}
+            # we wrap our data with our model_cls
             return self._model_cls(**model_data)
 
         return data
