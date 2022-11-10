@@ -57,7 +57,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest tests/*"
+test = "pytest tests/dexie.py"
 
 # a separate test env, run with:
 # `hatch run +py=310 test:pytest`
