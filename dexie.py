@@ -241,6 +241,7 @@ class _DexieResponseBody(converters.Converter):
 @install
 class DexieResponseFactory(converters.Factory):
     """Unpack a response to make the data immediately usable with our models"""
+
     def _get_model_new_type(self, type_):
         if type_ == DexieOffer:
             return "offer", DexieOffer
