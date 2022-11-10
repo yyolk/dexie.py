@@ -123,7 +123,7 @@ class Dexie(Consumer):
         """Post an offer to dexie
 
         Args:
-            offer: (uplink.Field) an offer string
+            offer: (str) an offer string
         """
 
     @get("v1/offers")
@@ -226,7 +226,7 @@ class _DexieResponseBody(converters.Converter):
                 # we could detect it here, but we can maybe also pass the req_def
                 if self._model.endswith("s"):
                     datas = data[self._model]
-                    return [self._model_cls(**data) for data in datas]
+                    return [self._model_cls(**datum) for datum in datas]
                 return self._model_cls(**data[self._model])
 
             # we wrap our data with our model_cls
