@@ -115,6 +115,7 @@ class DexieHistoricalTrade:
 
 @returns.json
 class Dexie(Consumer):
+    """Uplink DSL Dexie.Space API Client"""
     @sends_json
     @post("v1/offers")
     def post_offer(self, offer: Field):
@@ -208,10 +209,9 @@ class _DexieResponseBody(converters.Converter):
         self._model_cls = model_cls
 
     def convert(self, value):
-        try:
+        if hasattr(value, "json"):
             data = value.json()
-
-        except AttributeError:
+        else:
             # this is a safe fallback that should be forwards compatible to
             # pass-through any other dexie data IF theres a method to call it
             data = value
