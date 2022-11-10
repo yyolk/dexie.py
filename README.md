@@ -56,6 +56,40 @@ Decimal('30.43791071338040603262456230')
 ```
 
 
+# Development
+
+```sh
+hatch env create
+```
+
+
+## Tests
+
+Run tests during development
+```sh
+hatch run test
+```
+
+Run tests with matrix in ci
+```sh
+hatch run +py=39,310 test:pytest
+```
+
+
+## Versioning
+
+```sh
+# hatch version <major.minor.patch>
+# e.g.:
+$ hatch version 0.1.0
+Old: 0.0.10
+New: 0.1.0
+```
+
+
+
+
+
 
 ## TODO
 
