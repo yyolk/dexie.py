@@ -277,7 +277,7 @@ class DexieResponseFactory(converters.Factory):
         return self._make_converter(_DexieResponseBody, cls)
 
 
-# Utility Functions
+# Chia offer data utils
 def offer_bytes_to_dexie_id(offer: bytes) -> str:
     """Take offer encoded as bytes and return a dexie offer id
 
@@ -293,17 +293,17 @@ def offer_str_to_dexie_id(offer: str) -> str:
 
 
 @dataclass(frozen=True)
-class DexieChiaOffer:
+class DexieChiaOfferData:
     dexie_id: str
     offer_bytes: bytes
     offer_str: str
 
     @classmethod
-    def from_bytes(cls, offer: bytes) -> "DexieChiaOffer":
+    def from_bytes(cls, offer: bytes) -> "DexieChiaOfferData":
         """From bytes constructor"""
         return cls(offer_bytes_to_dexie_id(offer), offer, str(offer))
 
     @classmethod
-    def from_str(cls, offer: str) -> "DexieChiaOffer":
+    def from_str(cls, offer: str) -> "DexieChiaOfferData":
         """From str constructor"""
         return cls(offer_str_to_dexie_id(offer), bytes(offer, encoding="utf-8"), offer)
